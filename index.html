@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Player Information Form</title>
+</head>
+<body>
+  <h1>Player Information Form</h1>
+  <form id="entryForm">
+    <fieldset>
+        <legend>Registration</legend>
+        <label for="first-name">First Name:</label>
+        <input type="text" id="first-name" name="first-name" required minlength="3"><br><br>
+
+        <label for="last-name">Last Name:</label>
+        <input type="text" id="last-name" name="last-name" required minlength="3"><br><br>
+
+        <label for="dob">DOB:</label>
+        <input type="date" id="dob" name="dob" required max="2015-12-31" min="2011-01-01"><br><br>
+
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" readonly required max="12" min="8" onchange="
+        var dob = new Date(document.getElementById('dob').value);
+        var age = ageCalculator(dob);
+        if (age >= 8 && age <= 12) {
+        document.getElementById('age').value = age;
+        } else {
+        alert('Age must be between 8 and 12 inclusive.');
+        document.getElementById('dob').value = '';
+        document.getElementById('age').value = '';
+        }
+        "><br><br>
+
+        <label for="gender">Gender:</label>
+        <select id="gender" name="gender" required>
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="other">Other</option>
+        </select><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@gmail\.com$"><br><br>
+
+        <button type="button" id="registerButton" onclick="Register()">Register</button><br><br>
+    </fieldset><br>
+
+    <button type="button" id="playgameButton" onclick="PlayGame()">Start</button><br><br>
+
+    <!-- Play area -->
+    <fieldset>
+        <legend>Play Area</legend>
+        <label for="playArea">Characters:</label>
+        <input type="text" id="playArea" disabled readonly><br><br>
+
+        <!-- Answer input -->
+        <label for="answerInput">Answer:</label>
+        <input type="text" id="answerInput" disabled><br><br>
+
+        <!-- Accept button -->
+        <button type="button" id="acceptButton" onclick="CheckAnswer()" disabled>Accept</button>
+
+        <!-- Next button -->
+        <button type="button" id="nextButton" onclick="PlayGame()" disabled>Next</button>
+</fieldset><br>
+    <fieldset disabled>
+        <legend>Results Area</legend>
+        <label for="showpercentage">Percentage Score:</label>
+        <textarea id="showpercentage" rows="5" cols="50" disabled></textarea>
+        <br><br>
+    </fieldset><br><br>
+
+    <button id="calculate-button" onclick="findPercentageScore()">Calculate Percentage Score</button><br><br>
+
+    <button type="button" id="endButton" onclick="endGame()">End</button><br><br>
+
+    <label for="showallplayers">All Players:</label>
+    <textarea id="showallplayers" rows="10" readonly></textarea>
+
+  </form>
+
+<script>
+// Define a global array to store player data
+var PlayersData = [];
+// Define varible to store generated letters
+var original_chars = "";
+// store the percentage score and number of correct answers for each player
+var playersScores = [];
+
+
+// Define the Register() function
+function Register() {
+  // Get the values from the form fields
+  var firstName = document.getElementById("first-name").value;
+  var lastName = document.getElementById("last-name").value;
+  var dob = new Date(document.getElementById("dob").value);
+  var gender = document.getElementById("gender").value;
+  var email = document.getElementById("email").value;
+
+  // Calculate age from the date of birth
+  var today = new Date();
+  var age = today.getFullYear() - dob.getFullYear();
+  var monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+
+  // Validate the form data
+  if (firstName.length < 3 || lastName.length < 3) {
+    alert("First Name and Last Name must be at least 3 characters long.");
+    return false;
+  }
+  if (age < 8 || age > 12) {
+    alert("Age must be between 8 and 12 inclusive.");
+    return false;
+  }
+  if (email.indexOf("@gmail.com") === -1) {
+    alert("Please enter a valid Gmail address.");
+    return false;
+  }
+
+  // Create a player object
+  var player = {
+    firstName: firstName,
+    lastName: lastName,
+    dob: dob,
+    gender: gender,
+    email: email,
+    age: age,   
+  };
+
+  // Add the player object to the PlayersData array
+  PlayersData.push(player);
+
+  // Reset the form
+  document.getElementById("first-name").value = "";
+  document.getElementById("last-name").value = "";
+  document.getElementById("dob").value = "";
+  document.getElementById("gender").value = "";
+  document.getElementById("email").value = "";
+
+  // Alert the user that registration was successful
+  alert("Registration successful!");
+
+  // Return true to prevent the form from submitting
+  return true;
+
+}
+
+
+function PlayGame() {
+  // Generate a random string of 4 to 6 characters
+  const length = Math.floor(Math.random() * 3) + 4; // Generate a random number between 4 and 6
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; // List of characters to choose from
+  let randomString = '';
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length); // Get a random index
+    randomString += characters[randomIndex]; // Add the character to the string
+  }
+
+  // Display the characters in the Play area
+  const playArea = document.getElementById('playArea');
+  playArea.value = randomString;
+
+  // Enable the Play area, answer input, Accept button, and Next button
+  playArea.disabled = false;
+  const answerInput = document.getElementById('answerInput');
+  answerInput.disabled = false;
+  const acceptButton = document.getElementById('acceptButton');
+  acceptButton.disabled = false;
+  const nextButton = document.getElementById('nextButton');
+  nextButton.disabled = false;
+
+  // Disable the Start button
+  const startButton = document.querySelector("button[onclick='PlayGame()']");
+  startButton.disabled = true;
+
+  // Save the original characters to compare with the player's answer later
+  original_chars = characters;
+
+}
+
+
+function CheckAnswer() {
+        const answer = document.getElementById("answerInput").value.trim();
+        const original = playArea.value;
+
+    // Check if the answer is valid (contains only characters from the original string)
+    for (let i = 0; i < answer.length; i++) {
+        if (original.indexOf(answer[i]) === -1) {
+        alert("Invalid answer!");
+        return;
+        }
+    }
+    // Compare the player's answer with the original characters and update player_data
+    const isCorrect = (answer === original);
+    PlayersData.push({
+        original: original,
+        answer: answer,
+        isCorrect: isCorrect
+    });
+    // Display a message to the player
+    if (isCorrect) {
+        alert("Congratulations! Your answer is correct.");
+    } else {
+        alert("Sorry, your answer is incorrect.");
+    }
+
+    // Clear the answer input and disable Accept and Next buttons
+    const answerInput = document.getElementById("answerInput");
+    const acceptButton = document.getElementById("acceptButton");
+    const nextButton = document.getElementById("nextButton");
+    answerInput.value = "";
+    answerInput.disabled = true;
+    acceptButton.disabled = true;
+    nextButton.disabled = true;
+
+    // Enable the Start button
+    const startButton = document.querySelector("button[onclick='PlayGame()']");
+    startButton.disabled = false;
+
+    showAll();
+}
+
+// Function to find percentage score
+function findPercentageScore() {
+  // Clear showpercentage textarea
+  document.getElementById("showpercentage").value = "";
+
+  // Get player name and total number of questions
+  const playerName = document.getElementById("first-name").value;
+  const totalQuestions = PlayersData.length;
+
+  // Get number of correct answers for the player
+  let correctAnswers = 0;
+  for (let i = 0; i < PlayersData.length; i++) {
+    if (PlayersData[i].isCorrect) {
+      correctAnswers++;
+    }
+  }
+
+  // Calculate percentage score
+  const percentageScore = ((correctAnswers / totalQuestions) * 100).toFixed(2);
+
+  // Get current date and time
+  const currentDate = new Date().toLocaleString();
+
+  // Display data in showpercentage textarea
+  const showPercentageTextarea = document.getElementById("showpercentage");
+  showPercentageTextarea.value += `${playerName}: ${percentageScore}% (${correctAnswers}/${totalQuestions})\nDate: ${currentDate}\n\n`;
+}
+
+function endGame() {
+  
+  // clear the form
+  document.getElementById("first-name").value = "";
+  document.getElementById("last-name").value = "";
+  document.getElementById("dob").value = "";
+  document.getElementById("gender").value = "";
+  document.getElementById("email").value = "";
+  
+  // disable all buttons except for Register
+  document.getElementById("registerButton").disabled = true;
+  document.getElementById("acceptButton").disabled = true;
+  document.getElementById("nextButton").disabled = true;
+  document.getElementById("playgameButton").disabled = true;
+  document.getElementById("endButton").disabled = true;
+  document.getElementById("registerButton").disabled = false;
+  
+  // disable Play and Results areas
+  document.getElementById("playArea").disabled = true;
+  document.getElementById("answerInput").disabled = true;
+
+  findPercentageScore();
+}
+
+function showAll() {
+  let allPlayers = '';
+  for (let i = 0; i < PlayersData.length; i++) {
+    let player = PlayersData[i];
+    allPlayers += `${player.firstName}, ${player.lastName}, ${player.age}, ${player.answeredQuestions}, ${player.questionStatus}, ${player.percentageScore}\n`;
+  }
+  document.getElementById('showallplayers').value = allPlayers;
+}
+
+</script>
+  
+</body>
+</html>
+firstName: firstName,
+lastName: lastName,
+dob: dob,
+gender: gender,
+email: email,
+age: age,   
